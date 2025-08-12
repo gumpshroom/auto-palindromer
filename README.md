@@ -1,6 +1,6 @@
 # Palindromer
 This tool helps create palindromes by brute-forcing all continuations from any starting point.
-For more information of how the software functions see this [YouTube Video](http://youtube.com).
+For more information of how the software functions see this [YouTube Video](https://youtu.be/ap08_AGPh8s).
 
 ## How to use
 Text is inputted by passing an uppercase string with `-t` that contains a `|` separator in the center.

@@ -1,6 +1,7 @@
 #include "cmdLine.h"
 #include "trie.h"
 #include <cassert>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <array>
@@ -28,7 +29,7 @@ Trie g_tri_for;
 Trie g_tri_bac;
 
 //Random number generator
-std::mt19937 mt(1000);
+std::mt19937 mt(std::time(0));
 
 //Dictionary should be list of words separated by newlines
 bool LoadDictionary(const std::string& fname) {
