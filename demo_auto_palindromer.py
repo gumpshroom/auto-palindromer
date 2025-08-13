@@ -62,9 +62,8 @@ def run_demo():
     print("This demo uses a mock LLM that selects palindromes based on simple heuristics.")
     print("In real usage, replace this with actual Groq API calls.\n")
     
-    if not os.path.exists("./Palindromer"):
-        print("❌ Palindromer executable not found. Build it first:")
-        print("   g++ -o Palindromer palindrome.cpp cmdLine.cpp trie.cpp -std=c++17")
+    if not os.path.exists("./Palindromer.exe"):
+        print("❌ Palindromer.exe not found. Make sure the executable is present or build using Visual Studio.")
         return
     
     # Create mock auto-palindromer

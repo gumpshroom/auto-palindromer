@@ -83,9 +83,8 @@ if __name__ == "__main__":
     print("Running Auto-Palindromer Tests")
     print("=" * 40)
     
-    if not os.path.exists("./Palindromer"):
-        print("❌ Palindromer executable not found. Build it first:")
-        print("   g++ -o Palindromer palindrome.cpp cmdLine.cpp trie.cpp -std=c++17")
+    if not os.path.exists("./Palindromer.exe"):
+        print("❌ Palindromer.exe not found. Make sure the executable is present or build using Visual Studio.")
         sys.exit(1)
     
     test_palindromer_integration()

@@ -25,6 +25,12 @@
 //Probability of continuing if this is a word
 #define PROB_CONT 0.75f
 
+//=====  Filtering parameters  =====
+//Maximum tokens for API (8000 TPM limit - be conservative)
+#define MAX_TOKENS 1000
+//Minimum word length to avoid nonsensical short words
+#define MIN_WORD_LENGTH 2
+
 //Using global variables makes the recursive calls more compact
 Trie g_tri_for;
 Trie g_tri_bac;
@@ -250,6 +256,200 @@ void RandSearch(std::set<std::string>& palindromes, const std::string& startFor,
   }
 }
 
+//Count approximate tokens in a palindrome string (words + spaces)
+int countTokens(const std::string& palindrome) {
+  int tokens = 0;
+  bool inWord = false;
+  for (char c : palindrome) {
+    if (c == ' ' || c == '|') {
+      if (inWord) {
+        tokens++;
+        inWord = false;
+      }
+    } else {
+      inWord = true;
+    }
+  }
+  if (inWord) tokens++; // Count final word
+  return tokens;
+}
+
+//Check if a word is nonsensical based on basic criteria
+bool isNonsensicalWord(const std::string& word) {
+  if (word.length() < MIN_WORD_LENGTH) return true;
+  
+  // Filter out common nonsensical patterns
+  if (word.length() <= 3) {
+    // Check for common nonsensical short words/patterns
+    if (word == "SD" || word == "GN" || word == "II" || 
+        word == "AA" || word == "EE" || word == "OO" ||
+        word == "XX" || word == "ZZ" || word == "EB" ||
+        word == "ER" || word == "NI" || word == "PU" ||
+        word == "SA" || word == "AT" || word == "REM" ||
+        word == "ROC" || word == "SAB" || word == "SUR") {
+      return true;
+    }
+  }
+  
+  // Filter words that are likely fragmented parts (common in palindromes)
+  if (word.length() <= 4) {
+    // Common fragmented endings that don't make sense
+    if (word == "ASET" || word == "TASET" || word == "SUBSET" ||
+        word == "ANDSET" || word == "BESET" || word == "RESET" ||
+        word == "INSET" || word == "ONSET" || word == "UPSET" ||
+        word == "MERSET" || word == "CORSET" || word == "BASSET" ||
+        word == "ASSET" || word == "RUSSET") {
+      return true;
+    }
+  }
+  
+  // Filter words with too many repeated characters
+  int consecutiveCount = 1;
+  for (size_t i = 1; i < word.length(); i++) {
+    if (word[i] == word[i-1]) {
+      consecutiveCount++;
+      if (consecutiveCount >= 3) return true; // 3+ consecutive same chars
+    } else {
+      consecutiveCount = 1;
+    }
+  }
+  
+  return false;
+}
+
+//Check if a palindrome has basic grammatical structure
+bool hasBasicGrammarStructure(const std::string& palindrome) {
+  std::vector<std::string> words;
+  std::string currentWord;
+  
+  // Split into words
+  for (char c : palindrome) {
+    if (c == ' ' || c == '|') {
+      if (!currentWord.empty()) {
+        words.push_back(currentWord);
+        currentWord.clear();
+      }
+    } else {
+      currentWord += c;
+    }
+  }
+  if (!currentWord.empty()) {
+    words.push_back(currentWord);
+  }
+  
+  // Filter out palindromes with too many nonsensical words
+  int nonsensicalCount = 0;
+  for (const std::string& word : words) {
+    if (isNonsensicalWord(word)) {
+      nonsensicalCount++;
+    }
+  }
+  
+  // Reject if more than 20% of words are nonsensical (stricter)
+  return words.empty() || (nonsensicalCount * 5 < words.size());
+}
+
+//Quality score for palindrome ranking (higher is better)
+int calculateQualityScore(const std::string& palindrome) {
+  int score = 0;
+  
+  // Prefer reasonable length (not too short, not too long)
+  int length = palindrome.length();
+  if (length >= 10 && length <= 50) {
+    score += 20;
+  } else if (length > 50) {
+    score -= (length - 50); // Penalty for being too long
+  }
+  
+  // Count words and spaces for structure assessment
+  int wordCount = 0;
+  int spaceCount = 0;
+  bool inWord = false;
+  
+  for (char c : palindrome) {
+    if (c == ' ') {
+      spaceCount++;
+      if (inWord) {
+        wordCount++;
+        inWord = false;
+      }
+    } else if (c != '|') {
+      inWord = true;
+    }
+  }
+  if (inWord) wordCount++;
+  
+  // Prefer palindromes with 2-5 words per side
+  if (wordCount >= 2 && wordCount <= 10) {
+    score += 15;
+  }
+  
+  // Bonus for having reasonable word-to-space ratio
+  if (spaceCount > 0 && wordCount > 0) {
+    score += 10;
+  }
+  
+  // Penalty for consecutive spaces
+  if (palindrome.find("  ") != std::string::npos) {
+    score -= 10;
+  }
+  
+  return score;
+}
+
+//Filter and limit palindromes to stay within token limits
+std::set<std::string> filterPalindromes(const std::set<std::string>& palindromes, 
+                                       const std::string& startFor, const std::string& startBac, 
+                                       bool reverse_search) {
+  std::vector<std::pair<int, std::string>> scoredPalindromes;
+  
+  // Generate full palindromes and score them
+  for (const std::string& str : palindromes) {
+    std::string fullPalindrome;
+    if (reverse_search) {
+      const size_t ix = str.find_first_of('|');
+      fullPalindrome = "|" + str.substr(ix + 1, str.length() - ix - 1) + startBac + startFor + str.substr(0, ix) + "|";
+    } else {
+      fullPalindrome = startFor + str + startBac;
+    }
+    
+    // Apply basic grammar filter
+    if (hasBasicGrammarStructure(fullPalindrome)) {
+      int score = calculateQualityScore(fullPalindrome);
+      scoredPalindromes.push_back({score, str});
+    }
+  }
+  
+  // Sort by quality score (highest first)
+  std::sort(scoredPalindromes.begin(), scoredPalindromes.end(), 
+           [](const auto& a, const auto& b) { return a.first > b.first; });
+  
+  // Select palindromes up to token limit
+  std::set<std::string> filteredPalindromes;
+  int totalTokens = 0;
+  
+  for (const auto& scoredPair : scoredPalindromes) {
+    const std::string& str = scoredPair.second;
+    std::string fullPalindrome;
+    if (reverse_search) {
+      const size_t ix = str.find_first_of('|');
+      fullPalindrome = "|" + str.substr(ix + 1, str.length() - ix - 1) + startBac + startFor + str.substr(0, ix) + "|";
+    } else {
+      fullPalindrome = startFor + str + startBac;
+    }
+    
+    int tokens = countTokens(fullPalindrome);
+    if (totalTokens + tokens <= MAX_TOKENS) {
+      filteredPalindromes.insert(str);
+      totalTokens += tokens;
+    } else {
+      break; // Stop if we would exceed token limit
+    }
+  }
+  
+  return filteredPalindromes;
+}
+
 int main(int argc, const char* argv[]) {
   //Commandline variables
   bool print_help = false;
@@ -312,6 +512,11 @@ int main(int argc, const char* argv[]) {
   }
   std::cout << "Found " << palindromes.size() << " continuations" << std::endl;
 
+  //Apply filtering to reduce to reasonable token count
+  std::cout << "Filtering..." << std::endl;
+  std::set<std::string> filteredPalindromes = filterPalindromes(palindromes, startFor, startBac, reverse_search);
+  std::cout << "Filtered to " << filteredPalindromes.size() << " high-quality palindromes" << std::endl;
+
   //Save the results to a text file
   std::cout << "Saving..." << std::endl;
   std::ofstream fout(output_path);
@@ -319,7 +524,7 @@ int main(int argc, const char* argv[]) {
     std::cout << "Failed to save results to file: " << output_path << std::endl;
     return 1;
   }
-  for (const std::string& str : palindromes) {
+  for (const std::string& str : filteredPalindromes) {
     if (reverse_search) {
       const size_t ix = str.find_first_of('|');
       fout << "|" << str.substr(ix + 1, str.length() - ix - 1) << startBac << startFor << str.substr(0, ix) << "|" << std::endl;

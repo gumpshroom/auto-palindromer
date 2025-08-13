@@ -23,7 +23,7 @@ from typing import Optional, List
 
 
 class AutoPalindromer:
-    def __init__(self, api_key: str, palindromer_path: str = "./Palindromer"):
+    def __init__(self, api_key: str, palindromer_path: str = "./Palindromer.exe"):
         self.api_key = api_key
         self.palindromer_path = palindromer_path
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
@@ -221,7 +221,7 @@ def main():
     # Check if palindromer exists
     if not os.path.exists(auto_palindromer.palindromer_path):
         print(f"Error: Palindromer not found at {auto_palindromer.palindromer_path}")
-        print("Make sure to build the palindromer first: g++ -o Palindromer palindrome.cpp cmdLine.cpp trie.cpp -std=c++17")
+        print("Make sure the Palindromer.exe is present or build using Visual Studio with the included .sln file")
         sys.exit(1)
     
     try:

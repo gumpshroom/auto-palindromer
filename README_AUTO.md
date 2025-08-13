@@ -19,20 +19,19 @@ An automatic version of the palindrome builder that iterates upon itself using L
 
 ## Setup
 
-1. **Build the Palindromer**:
-   ```bash
-   g++ -o Palindromer palindrome.cpp cmdLine.cpp trie.cpp -std=c++17
-   ```
+1. **Use the Palindromer.exe** (included) or **build using Visual Studio**:
+   - Open `Palindromer.sln` in Visual Studio
+   - Build the solution to generate `Palindromer.exe`
 
 2. **Set up your API key**:
-   ```bash
-   export GROQ_API_KEY="your_api_key_here"
+   ```cmd
+   set GROQ_API_KEY=your_api_key_here
    ```
 
 ## Usage
 
-```bash
-python3 auto_palindromer.py [starting_palindrome] [iterations] [api_key]
+```cmd
+python auto_palindromer.py [starting_palindrome] [iterations] [api_key]
 ```
 
 **Parameters:**

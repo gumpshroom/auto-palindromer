@@ -8,16 +8,16 @@ For more information of how the software functions see this [YouTube Video](http
 
 See [`README_AUTO.md`](README_AUTO.md) for detailed instructions on using the automatic version.
 
-**Quick start:**
-```bash
-# Build the palindromer first
-g++ -o Palindromer palindrome.cpp cmdLine.cpp trie.cpp -std=c++17
+**Quick start (Windows):**
+```cmd
+REM The Palindromer.exe should already be included, or build using Visual Studio
+REM with the included .sln file
 
-# Set your API key
-export GROQ_API_KEY="your_api_key_here"
+REM Set your API key
+set GROQ_API_KEY=your_api_key_here
 
-# Run automatic palindrome iteration
-python3 auto_palindromer.py "WAS|SAW" 5
+REM Run automatic palindrome iteration
+python auto_palindromer.py "WAS|SAW" 5
 ```
 
 ## How to use
@@ -39,15 +39,15 @@ This can be changed with `-d="your_dictionary.txt"` and `-o="output_name.txt"`.
 ## An Example
 Start with a list of all start and end palindrome pairs:
 
-```./Palindromer```
+```.\Palindromer.exe```
 
 After looking through `palindromes.txt`, suppose we would like to continue developing `NOTE NO| ONE TON`
 
-```./Palindromer -t="NOTE NO| ONE TON"```
+```.\Palindromer.exe -t="NOTE NO| ONE TON"```
 
 Next let's continue with: `NOTE NO ERASER |RES ARE ONE TON`.
 
-```./Palindromer -t="NOTE NO ERASER |RES ARE ONE TON"```
+```.\Palindromer.exe -t="NOTE NO ERASER |RES ARE ONE TON"```
 
 Lastly, I find a way to finish the sentence with `NOTE: NO ERASER OF ORES ARE ONE TON.`
 It may not be very meaningful, but the whole process took under 10 minutes.
