@@ -23,7 +23,7 @@ from typing import Optional, List
 
 
 class AutoPalindromer:
-    def __init__(self, api_key: str, palindromer_path: str = "./Palindromer"):
+    def __init__(self, api_key: str, palindromer_path: str = "./Palindromer.exe"):
         self.api_key = api_key
         self.palindromer_path = palindromer_path
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
