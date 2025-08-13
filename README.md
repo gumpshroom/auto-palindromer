@@ -2,6 +2,24 @@
 This tool helps create palindromes by brute-forcing all continuations from any starting point.
 For more information of how the software functions see this [YouTube Video](https://youtu.be/ap08_AGPh8s).
 
+## Auto-Palindromer
+
+**NEW**: An automatic version that iterates upon itself using LLM evaluation! The auto-palindromer generates palindromes, sends them to a Groq LLM API to select the best one, then uses that selection as input for the next iteration.
+
+See [`README_AUTO.md`](README_AUTO.md) for detailed instructions on using the automatic version.
+
+**Quick start:**
+```bash
+# Build the palindromer first
+g++ -o Palindromer palindrome.cpp cmdLine.cpp trie.cpp -std=c++17
+
+# Set your API key
+export GROQ_API_KEY="your_api_key_here"
+
+# Run automatic palindrome iteration
+python3 auto_palindromer.py "WAS|SAW" 5
+```
+
 ## How to use
 Text is inputted by passing an uppercase string with `-t` that contains a `|` separator in the center.
 This will generally look something like this: `t="WAS|SAW"`. Do not add punctuation.

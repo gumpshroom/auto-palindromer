@@ -3,3 +3,7 @@ Debug/
 Release/
 Training/
 palindromes.txt
+
+# Auto-palindromer output files
+palindromes_iter_*.txt
+test_palindromes.txt
