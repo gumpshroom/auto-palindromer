@@ -19,14 +19,48 @@ import subprocess
 import tempfile
 import requests
 import re
-from typing import Optional, List
+from typing import Optional, List, Set
+
+
+def load_dictionary(dict_path: str = "dictionary.txt") -> Set[str]:
+    """Load a dictionary file with one word per line (case-insensitive, allows spaces)."""
+    if not os.path.exists(dict_path):
+        print(f"Dictionary file {dict_path} not found!")
+        return set()
+    with open(dict_path, "r", encoding="utf-8") as f:
+        # Keep original casing for spaces, but strip each line
+        words = {line.strip() for line in f if line.strip()}
+    return words
+
+
+def filter_palindromes_with_dictionary(
+    palindromes: List[str], dictionary: Set[str]
+) -> List[str]:
+    """
+    For each palindrome of the form WORD|DROW (each side can contain spaces),
+    split both sides by spaces, and only keep palindromes where all words
+    on both sides are found in the dictionary (case-insensitive match).
+    """
+    filtered = []
+    for line in palindromes:
+        if "|" not in line:
+            continue
+        left, right = line.split("|", 1)
+        left_words = [w.strip() for w in left.strip().split()]
+        right_words = [w.strip() for w in right.strip().split()]
+        # All words in both sides must be in the dictionary
+        if all(word in dictionary for word in left_words + right_words):
+            filtered.append(line)
+    return filtered
 
 
 class AutoPalindromer:
-    def __init__(self, api_key: str, palindromer_path: str = "./Palindromer.exe"):
+    def __init__(self, api_key: str, palindromer_path: str = "./Palindromer.exe", dict_path: str = "dictionary.txt"):
         self.api_key = api_key
         self.palindromer_path = palindromer_path
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
+        # Load dictionary at initialization (case-sensitive, as dictionary.txt may contain phrases with spaces)
+        self.dictionary = load_dictionary(dict_path)
         
     def run_palindromer(self, input_text: str, output_file: str = "palindromes.txt") -> bool:
         """Run the Palindromer program with given input"""
@@ -57,6 +91,15 @@ class AutoPalindromer:
         except Exception as e:
             print(f"Error reading palindromes file: {e}")
             return []
+    
+    def filter_palindromes(self, palindromes: List[str]) -> List[str]:
+        """Filter palindromes using the loaded dictionary."""
+        if not self.dictionary:
+            print("Warning: Dictionary is empty. No filtering applied.")
+            return palindromes
+        filtered = filter_palindromes_with_dictionary(palindromes, self.dictionary)
+        print(f"Filtered {len(filtered)} palindromes from {len(palindromes)} using dictionary.")
+        return filtered
     
     def query_llm(self, palindromes: List[str]) -> Optional[str]:
         """Query the LLM to select the best palindrome"""
@@ -166,8 +209,14 @@ class AutoPalindromer:
             if not palindromes:
                 print(f"No palindromes generated on iteration {i+1}")
                 break
-                
-            print(f"Generated {len(palindromes)} palindromes")
+
+            # Filter palindromes by dictionary
+            palindromes = self.filter_palindromes(palindromes)
+            if not palindromes:
+                print(f"No valid palindromes found after dictionary filtering on iteration {i+1}")
+                break
+
+            print(f"Generated {len(palindromes)} palindromes after filtering")
             
             # Query LLM for best palindrome
             print("Querying LLM for best palindrome...")
